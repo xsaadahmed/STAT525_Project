@@ -2,10 +2,14 @@
 
 Shared STAT 525 analysis project. Topic assignments are placeholders until the team agrees on ownership.
 
+See the [project proposal](docs/project_proposal.md) for the project goals, research questions, dataset, and planned variables.
+
 ## Project structure
 
 ```text
 STAT525_Project.Rproj
+docs/
+  project_proposal.md
 data/
   README.md
   cleaned_data.rds          # Generated after data preparation; not included yet
