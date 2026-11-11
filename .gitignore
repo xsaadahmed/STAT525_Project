@@ -1,0 +1,11 @@
+.Rproj.user/
+.Rhistory
+.RData
+.RDataTmp
+.Renviron
+.env
+.DS_Store
+Thumbs.db
+progress_report.html
+progress_report_files/
+progress_report_cache/

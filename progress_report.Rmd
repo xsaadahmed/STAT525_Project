@@ -1,0 +1,37 @@
+---
+title: "STAT 525 Progress Report"
+author: "Project team"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Research question
+
+TODO: State the shared question and planned approach.
+
+## Data and preparation
+
+TODO: Describe the source, variables, cleaning, and limitations.
+
+## Energy consumption
+
+TODO: Summarize Person 1's work and findings.
+
+## Economic factors
+
+TODO: Summarize Person 2's work and findings.
+
+## Electricity prices
+
+TODO: Summarize Person 3's work and findings.
+
+## Next steps
+
+TODO: List remaining tasks, owners, and deadlines.
+
+## References
+
+TODO: Cite datasets and methods.
