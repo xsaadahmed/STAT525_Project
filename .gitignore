@@ -9,3 +9,29 @@ Thumbs.db
 progress_report.html
 progress_report_files/
 progress_report_cache/
+
+# Local original workbooks; keep cleaned/canonical data tracked.
+/data/raw/*
+!/data/raw/.gitkeep
+*.xlsb
+
+# R sessions, secrets, editor/platform temporary files.
+.Ruserdata
+.Renviron.*
+.env.*
+!.env.example
+*.pem
+*.key
+*~
+*.swp
+*.tmp
+~$*
+Desktop.ini
+
+# Intermediate downloads and generated scratch files (not canonical external CSVs).
+/data/external/cache/
+/data/external/downloads/
+/data/external/tmp/
+/data/external/external-*
+/cache/
+/tmp/

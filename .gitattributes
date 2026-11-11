@@ -1,0 +1,6 @@
+# Preserve accepted artifact bytes and hashes across Git line-ending settings.
+/data/cleaned_county_data.csv -text whitespace=cr-at-eol
+/data/cleaned_data.rds binary
+/R/00_data_preparation.R -text whitespace=cr-at-eol
+/docs/data_dictionary.md -text whitespace=cr-at-eol
+/docs/cleaning_report.md -text whitespace=cr-at-eol
