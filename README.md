@@ -11,9 +11,9 @@ data/
   cleaned_data.rds          # Generated after data preparation; not included yet
 R/
   00_data_preparation.R     # Shared
-  01_energy_consumption.R   # Person 1 (TBD)
-  02_economic_factors.R     # Person 2 (TBD)
-  03_electricity_prices.R   # Person 3 (TBD)
+  01_energy_consumption.R   # Saad
+  02_economic_factors.R     # Aiden
+  03_electricity_prices.R   # Ray
 progress_report.Rmd
 TEAM_SETUP.md
 .gitignore
