@@ -1,6 +1,5 @@
-# Quick setup for teammates
+# Quick setup for us
 
-1. Send me your GitHub username so I can invite you to the private repository. Accept the invitation before cloning.
 2. Install R, RStudio Desktop, and Git if needed. Restart RStudio after installing Git.
 3. In RStudio, choose **File → New Project → Version Control → Git**.
 4. Paste `https://github.com/xsaadahmed/STAT525_Project.git`, choose a local folder, and click **Create Project**. Authenticate with GitHub if prompted.
