@@ -1,6 +1,6 @@
-# Canonical external county data: not added yet
+# Canonical external county data
 
-This directory currently contains instructions only. Do not create dummy CSVs or merge current-year substitutes. Keep the 19-column NREL baseline unchanged. All paths below are relative to the project root.
+This directory contains canonical ACS income, BLS unemployment and USDA RUCC inputs; the NaNDA climate CSV still requires local generation. Do not create dummy CSVs or merge current-year substitutes. Keep the 19-column NREL baseline unchanged. All paths below are relative to the project root.
 
 ## Agreed files and schemas
 
@@ -91,7 +91,7 @@ After checks pass, it writes **22 columns** to separate `data/county_with_extern
 
 ## Provenance status
 
-ACS income and BLS unemployment: **supplied**, with coverage documented below. USDA RUCC: **not supplied**. The final three-source merge is not ready. NaNDA climate is prepared by the script below but its generated CSV is not committed; reported weather coverage requires the original download to reproduce.
+ACS income and BLS unemployment: **supplied**, with coverage documented below. USDA RUCC: **supplied from the user-provided 2013 file**, with coverage below. All three canonical inputs are available; the final merge remains an explicit separate operation and has not been run by the price-analysis script. NaNDA climate is prepared by the script below but its generated CSV is not committed; reported weather coverage requires the original download to reproduce.
 
 
 ### NaNDA county heating and cooling degree days, 2016
@@ -175,3 +175,22 @@ ACS income and BLS unemployment: **supplied**, with coverage documented below. U
   run `source("R/prepare_acs_income.R")`. The script writes
   `data/external/acs_income_2016.csv`, validates it with the team's merge
   helper, and checks coverage against `data/cleaned_data.rds`.
+
+
+### USDA 2013 RUCC supplied with Ray's analysis
+
+The user supplied `usda_rucc_2013.csv` with FIPS, state, county name, population,
+RUCC_2013 and descriptions. The raw upload SHA-256 is
+`87ce0c8ae960e79e4c147d1a1edeb942b626094c67e4e127738012aa38d9fe50`.
+Place it at `data/external/downloads/usda_rucc_2013.csv` and run
+`Rscript R/prepare_usda_rucc.R` to regenerate the two-column canonical CSV.
+Six entirely blank rows are omitted; all 3,234 nonblank unique FIPS are retained,
+with two missing territorial codes (60030 and 69085). Categories are integers
+1-9 or missing; factor encoding is applied for analysis. This is a supplied-file
+preparation, not an independently authenticated USDA redownload.
+
+Direct joins match 3,140 of 3,142 baseline counties. FIPS 02158 and 46102 remain
+unmatched due to historical geography/code differences; no automatic mapping or
+imputation is performed. Emissions-only fits retain all baseline rows; RUCC and
+joint price models explicitly use 3,140 complete counties. Source-only records
+remain in the canonical reference. See `docs/ray_electricity_prices_summary.md`.
