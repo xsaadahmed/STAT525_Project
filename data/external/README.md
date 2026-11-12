@@ -91,4 +91,87 @@ After checks pass, it writes **22 columns** to separate `data/county_with_extern
 
 ## Provenance status
 
-ACS income: **not supplied**. BLS unemployment: **not supplied**. USDA RUCC: **not supplied**. No match rates or external-data results are claimed yet.
+ACS income and BLS unemployment: **supplied**, with coverage documented below. USDA RUCC: **not supplied**. The final three-source merge is not ready. NaNDA climate is prepared by the script below but its generated CSV is not committed; reported weather coverage requires the original download to reproduce.
+
+
+### NaNDA county heating and cooling degree days, 2016
+
+- **Source.** National Neighborhood Data Archive (NaNDA), *Weather by County,
+  United States, 2003–2016*, ICPSR 38858, dataset 14 (Average Temperatures,
+  2016). The dataset uses 2010 county boundaries and covers the contiguous
+  United States and Washington, D.C. Downloaded 11/12/2026.
+  [NaNDA study and data](https://doi.org/10.3886/ICPSR38858.v1)
+
+- **Preparation.** We converted each county's daily mean temperature from
+  Celsius to Fahrenheit. Using a 65°F base, we calculated daily heating degree
+  days as `max(65 - temp_f, 0)` and daily cooling degree days as
+  `max(temp_f - 65, 0)`. We summed each measure by county to obtain
+  `hdd65` and `cdd65`, both in °F-days. We used the five-digit `county_fips`
+  as the county identifier.
+
+- **Coverage.** Of the 3,003 counties in the weather file, 1,938 had valid
+  temperatures on all 366 days of 2016. We kept the other 1,065 counties in
+  the CSV with both annual totals recorded as missing. Of the 3,142 NREL
+  counties, 3001 matched a NaNDA county by FIPS. Among those
+  matches, 1937 had complete annual HDD and CDD totals and
+  1064 had missing totals. The preparation script
+  prints the FIPS codes found in only one of the two datasets.
+
+- **Reproduction.** Place the original 2016 NaNDA temperature TSV in
+  `data/external/downloads/`. From the project root, run
+  `source("R/prepare_nanda_climate.R")`. The script writes
+  `data/external/nanda_degree_days_2016.csv` and checks its coverage against
+  `data/cleaned_data.rds`.
+  
+  
+### BLS county unemployment, 2016
+
+- **Source.** U.S. Bureau of Labor Statistics, Local Area Unemployment Statistics
+  (LAUS), *Labor Force Data by County, 2016 Annual Averages*. The workbook is
+  dated May 19, 2026. Downloaded 11/12/2026.
+  [BLS workbook](https://www.bls.gov/lau/laucnty16.xlsx)
+
+- **Preparation.** For each 2016 record, we combined `State FIPS Code` (two
+  digits) and `County FIPS Code` (three digits) into the five-character
+  `county_fips`. We used the published `Unemployment Rate (%)` as
+  `unemployment_rate_pct`, keeping the original percentage scale. For example,
+  5.1 represents 5.1% unemployment.
+
+- **Coverage.** The workbook contains 3,220 unique county identifiers and no
+  missing rates. Of the 3,142 NREL counties, 3,133 matched by FIPS. The nine
+  unmatched NREL counties are the eight historical Connecticut counties and
+  Kalawao County, Hawaii (15005). BLS reports nine Connecticut planning regions
+  and 78 Puerto Rico municipios that have no corresponding FIPS in the NREL
+  baseline. We retained all BLS rows in the prepared CSV. The nine unmatched
+  NREL counties receive a missing unemployment rate when joined.
+
+- **Reproduction.** Place the workbook in `data/external/downloads/laucnty16.xlsx`.
+  With `readxl` installed, run `source("R/prepare_bls_unemployment.R")` from the
+  project root. The script writes `data/external/bls_unemployment_2016.csv`,
+  validates it with the team's merge helper, and prints the unmatched FIPS codes.
+
+
+### ACS county median household income, 2012–2016
+
+- **Source.** U.S. Census Bureau, 2012–2016 American Community Survey
+  five-year estimates, detailed table B19013. Downloaded 11/12/2026.
+  [Census table B19013](https://data.census.gov/table/ACSDT5Y2016.B19013)
+
+- **Preparation.** We selected county records and extracted the five-digit
+  `county_fips` from `GEO_ID`, preserving leading zeros. We used the estimate
+  `B19013_001E` as `median_household_income`, measured in 2016
+  inflation-adjusted dollars. We kept exact dollar estimates and treated
+  unavailable values as missing at import; the script rejects negative suppression codes or nonnumeric bounded estimates rather than silently treating them as exact dollars. We checked for duplicate
+  county identifiers before saving the CSV.
+
+- **Coverage.** The source contained 3,220 unique county records,
+  of which 0 had missing income values.
+  Of the 3,142 NREL counties, 3,142 matched by FIPS and
+  3,142 had a usable income estimate. The preparation script
+  prints the FIPS codes found in only one dataset.
+
+- **Reproduction.** Download the machine-readable county data CSV and save it
+  as `data/external/downloads/acs_b19013_2016.csv`. From the project root,
+  run `source("R/prepare_acs_income.R")`. The script writes
+  `data/external/acs_income_2016.csv`, validates it with the team's merge
+  helper, and checks coverage against `data/cleaned_data.rds`.
