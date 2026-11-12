@@ -200,7 +200,7 @@ run_energy_analysis <- function(out = 'outputs/saad_energy_consumption') {
     'Exported coefficient estimates verified against fitted model objects.',
     'Nine genuine gas zeros preserved; log1p finite; gasoline strictly positive.',
     'Sensitivity exclusions are diagnostic alternatives, not cleaned datasets.',
-    capture.output(sessionInfo())),file.path(out,'execution_validation.txt'))
+    trimws(capture.output(sessionInfo()),which="right")),file.path(out,'execution_validation.txt'))
   invisible(list(data=d,descriptives=descriptives,correlations=correlations,models=models,
     coefficients=coefficients,comparison=comparison,vif=vif,diagnostics=diagnostics,
     influence=influence,extremes=extremes,sensitivity=sensitivity,partial_r2=partial_r2))
