@@ -1,8 +1,8 @@
-"model","term","partial_r_squared"
-"raw_multiple","res_gas_mcf_pc",0.115026052067029
-"raw_multiple","gasoline_gal_pc",0.00151722644999706
-"log_gasoline_multiple","res_gas_mcf_pc",0.113513539494758
-"log_gasoline_multiple","log_gasoline",0.0226850260384567
-"quadratic_gas_log_gasoline","res_gas_mcf_pc",0.13025519750165
-"quadratic_gas_log_gasoline","I(res_gas_mcf_pc^2)",0.0577504164324984
-"quadratic_gas_log_gasoline","log_gasoline",0.0189819494491311
+"model","term","partial_r_squared","delta_r_squared"
+"raw_multiple","res_gas_mcf_pc",0.115026052067029,0.114679805972435
+"raw_multiple","gasoline_gal_pc",0.00151722644999706,0.0013406982731861
+"log_gasoline_multiple","res_gas_mcf_pc",0.113513539494758,0.110583608250483
+"log_gasoline_multiple","log_gasoline",0.0226850260384567,0.0200456400143815
+"quadratic_gas_log_gasoline","res_gas_mcf_pc",0.13025519750165,0.121866509280331
+"quadratic_gas_log_gasoline","I(res_gas_mcf_pc^2)",0.0577504164324984,0.049873554077411
+"quadratic_gas_log_gasoline","log_gasoline",0.0189819494491311,0.0157450834208691

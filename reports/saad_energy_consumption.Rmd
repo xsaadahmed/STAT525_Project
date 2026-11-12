@@ -32,6 +32,12 @@ m <- z$models$quadratic_gas_log_gasoline
 cf <- coef(m)
 turn <- -cf[2]/(2*cf[3])
 preferred <- subset(z$coefficients,model=='quadratic_gas_log_gasoline')
+geo <- subset(z$geographic_sensitivity,scenario=='without_NE_IL')
+tail_counts <- setNames(z$tail_states$count_above_full_minimum,z$tail_states$state_abbr)
+raw_full <- z$models$raw_multiple; raw_reduced <- z$models$gas_simple
+raw_delta_r2 <- summary(raw_full)$r.squared-summary(raw_reduced)$r.squared
+raw_partial_r2 <- (deviance(raw_reduced)-deviance(raw_full))/deviance(raw_reduced)
+cv <- setNames(z$comparison$cv_rmse,z$comparison$model)
 ```
 
 ## Purpose and data
@@ -68,11 +74,11 @@ The script exports every 1.5-IQR exploratory extreme and every model-specific in
 
 ### Relationships, correlations and transformations
 
-```{r relationships, fig.cap='Figure 2. Electricity versus gas and gasoline. Red: full-sample simple OLS; green: LOWESS. Right panels zoom to the 99th predictor percentile (32 counties outside each view), without changing either fitted curve.'}
+```{r relationships, fig.cap='Figure 2. Electricity versus gas and gasoline. Red: full-sample simple OLS; green: LOWESS. Right panels use exact observed-minimum to 99th-percentile horizontal limits: 32 counties have predictor values above each displayed upper limit. Both curves use all counties.'}
 knitr::include_graphics(file.path(root,'outputs/saad_energy_consumption/02_relationships.png'),rel_path=FALSE)
 ```
 
-Gas has a moderate negative overall relationship with electricity. However, the smooth curve falls through most of the gas range and turns upward in the sparse upper tail. A single negative slope misses this curvature. Gasoline has a weak, nonuniform positive association: the central cloud is broad, and its raw-scale fitted slope is sensitive to extreme ratios.
+Gas has a moderate negative overall relationship with electricity. However, the smooth curve falls through most of the gas range and turns upward in the sparse, geographically concentrated upper tail (examined below). A single negative slope misses this curvature. Gasoline has a weak, nonuniform positive association: the central cloud is broad, and its raw-scale fitted slope is sensitive to extreme ratios.
 
 ```{r correlation-table}
 a <- z$correlations
@@ -106,18 +112,18 @@ The simple-model diagnostic figures are saved separately. The gas residual curve
 knitr::kable(coef_table('raw_multiple'),caption='Table 4. Required raw multiple regression; classical OLS inference. All 3,142 counties retained.')
 ```
 
-Holding gasoline constant, an extra 1 Mcf/person of natural gas is associated with 0.04365 MWh/person lower fitted electricity. Holding natural gas constant, an extra 100 gallons/person of gasoline is associated with 0.00575 MWh/person higher fitted electricity. These are conditional county associations, not causal effects. The gas slope changes little from its simple model; the already small gasoline slope shrinks. R-squared is 0.11769 and residual standard error is 1.12084 MWh/person. Gasoline adds only 0.00152 partial R-squared beyond gas. The gasoline classical p-value is 0.029, but the HC3 p-value is 0.116 (HC3 95% CI for its per-gallon slope: -0.00001418 to 0.00012922).
+Holding gasoline constant, an extra 1 Mcf/person of natural gas is associated with 0.04365 MWh/person lower fitted electricity. Holding natural gas constant, an extra 100 gallons/person of gasoline is associated with 0.00575 MWh/person higher fitted electricity. These are conditional county associations, not causal effects. The gas slope changes little from its simple model; the already small gasoline slope shrinks. R-squared is 0.11769 and residual standard error is 1.12084 MWh/person. Adding gasoline raises ordinary R-squared by `r num(raw_delta_r2,9)` (`r num(100*raw_delta_r2,3)` percentage points of total electricity variation); its partial R-squared is `r num(raw_partial_r2,9)` (`r num(100*raw_partial_r2,3)`% of variation left unexplained by gas alone). The gasoline classical p-value is 0.029, but the HC3 p-value is 0.116 (HC3 95% CI for its per-gallon slope: -0.00001418 to 0.00012922).
 
 ### Model comparison and preliminary choice
 
 ```{r comparison-table}
 a <- z$comparison
 knitr::kable(data.frame(Model=a$model,N=a$n,R2=num(a$r_squared,4),Adjusted_R2=num(a$adjusted_r_squared,4),
-  Residual_SE=num(a$residual_se,4),CV_RMSE=num(a$cv_rmse,4)),
-  caption='Table 5. Same response, same counties. Residual SE and seeded 10-fold CV RMSE are in MWh/person. Random folds do not test spatial generalization.')
+  Residual_SE=num(a$residual_se,4),CV_RMSE=num(a$cv_rmse,5)),
+  caption='Table 5. Exploratory candidate-formula comparisons on the same seeded random county folds. Residual SE and pooled 10-fold CV RMSE are in MWh/person; the winning RMSE does not independently validate model selection or new-region performance.')
 ```
 
-The **quadratic-gas plus log-gasoline model** is preferred provisionally because it represents the visible gas curvature, compresses gasoline's extreme scale, and improves original-scale cross-validation error. Its R-squared is `r num(summary(m)$r.squared,4)` and adjusted R-squared is `r num(summary(m)$adj.r.squared,4)`. It explains about 18.6% of county electricity variation, leaving most variation unexplained. The improvement is useful but modest, and does not justify treating the model as final.
+The **quadratic-gas plus log-gasoline model** is retained provisionally as a full-sample description because it represents the visible gas curvature, compresses gasoline's extreme scale, and has lower exploratory candidate-comparison RMSE. Its R-squared is `r num(summary(m)$r.squared,4)` and adjusted R-squared is `r num(summary(m)$adj.r.squared,4)`. It explains about 18.6% of county electricity variation, leaving most variation unexplained. Its RMSE is lower by `r num(cv['log_gasoline_multiple']-cv['quadratic_gas_log_gasoline'],4)` MWh/person than the otherwise identical log-gasoline model and by `r num(cv['raw_multiple']-cv['quadratic_gas_log_gasoline'],4)` than raw multiple regression. These are exploratory comparisons: full-data exploration informed the formulas and the same CV results helped select the winner, so its RMSE can be optimistic for the whole selection process; it is not an independent assessment or evidence of performance in a new region. Fixed row-wise logs and squares do not introduce training/test leakage.
 
 The fitted equation is:
 
@@ -139,7 +145,7 @@ knitr::kable(data.frame(Term=a$term,Estimate=num(a$estimate,6),OLS_SE=num(a$std_
 
 Holding gas constant, a doubling of gasoline is associated with `r num(cf[4]*log(2))` MWh/person higher fitted electricity (HC3 95% interval `r num(preferred$hc3_ci_low[4]*log(2))` to `r num(preferred$hc3_ci_high[4]*log(2))`). A 10% difference corresponds to `r num(cf[4]*log(1.1))` MWh/person, about `r num(100*cf[4]*log(1.1)/mean(z$data$res_elec_mwh_pc),2)`% of the mean electricity response. This is a small conditional association despite a small model-based p-value.
 
-The gas association is **not a constant negative slope** in this model: the local slope is -0.099986 + 0.00284644 G. At G = 10 it is `r num(cf[2]+20*cf[3],4)` MWh/person per Mcf/person. Increasing gas from 5 to 15 Mcf/person gives a fitted difference of `r num(10*cf[2]+(15^2-5^2)*cf[3])` MWh/person, holding gasoline fixed. The fitted curve reaches its minimum at about `r num(turn,1)` Mcf/person; `r sum(z$data$res_gas_mcf_pc>turn)` counties lie above this point. The upper-tail upturn is descriptive, based on fewer observations, and should not be extrapolated or interpreted as fuel substitution causing electricity changes. The intercept refers to G = 0 and gasoline = 1 gallon/person, outside the observed joint range.
+The gas association is **not a constant negative slope** in this model: the local slope is -0.099986 + 0.00284644 G. At G = 10 it is `r num(cf[2]+20*cf[3],4)` MWh/person per Mcf/person. Increasing gas from 5 to 15 Mcf/person gives a fitted difference of `r num(10*cf[2]+(15^2-5^2)*cf[3])` MWh/person, holding gasoline fixed. The fitted curve reaches its minimum at about `r num(turn,1)` Mcf/person; `r sum(z$data$res_gas_mcf_pc>turn)` counties lie above this point. The upper-tail upturn is a provisional, geographically concentrated full-sample description, not a general fuel-substitution finding; the geographic sensitivity below limits its interpretation. The intercept refers to G = 0 and gasoline = 1 gallon/person, outside the observed joint range.
 
 ```{r preferred-figure, fig.cap='Figure 3. Partial-residual views for the preliminary model. Each point is its model residual plus the fitted response with the other predictor fixed at its sample median. Red curves show conditional fitted means; these are adjusted values, not observed electricity values.'}
 knitr::include_graphics(file.path(root,'outputs/saad_energy_consumption/05_preliminary_model.png'),rel_path=FALSE)
@@ -153,7 +159,7 @@ knitr::include_graphics(file.path(root,'outputs/saad_energy_consumption/diagnost
 
 The quadratic improves the obvious mean-curve problem, but the residual smoother is not perfectly flat, tails remain nonnormal, and dispersion still varies with fitted values. The preliminary model's BP-style auxiliary statistic is 42.13 (p < 0.001), and 40 counties have absolute externally studentized residuals above 3. A variance test alone is insufficient; the plots support retaining caution. HC3 intervals provide a variance sensitivity check rather than certifying assumptions. Further predictor transformations or logging electricity were not pursued as a significance search.
 
-Raw quadratic-term VIFs are about 4.95 for gas and 4.94 for its square, with log-gasoline VIF 1.008. This is expected overlap between a variable and its square, not strong redundancy between the two fuels. Centering gas would change the intercept/linear-term meaning and reduce this numerical overlap without changing fitted values or resolving model limitations. In the raw two-fuel model, gas partial R-squared is 0.1150 versus gasoline 0.0015; gas is much more informative by incremental explanatory power, rather than by unscaled coefficients.
+Raw quadratic-term VIFs are about 4.95 for gas and 4.94 for its square, with log-gasoline VIF 1.008. This is expected overlap between a variable and its square, not strong redundancy between the two fuels. Centering gas would change the intercept/linear-term meaning and reduce this numerical overlap without changing fitted values or resolving model limitations. In the raw two-fuel model, gas partial R-squared is 0.1150 versus gasoline 0.0015; gas explains a larger fraction of the variation remaining after the other predictor; these partial measures have different reduced-model denominators and are not increases in total R-squared or comparisons of unscaled coefficients.
 
 Peoria County has the highest preliminary-model leverage (0.0944) and Cook's distance (0.1316). Other influential high-gas cases include Kimball (31105), Deuel (31049), Cheyenne (31033), and Franklin (31061), all in Nebraska. Kusilvak Census Area, AK (02158), combines zero gas and low gasoline and is also flagged. A high gas value is not necessarily from a tiny population: Peoria has 186,818 residents. No independent source audit beyond the accepted baseline is claimed.
 
@@ -165,13 +171,15 @@ knitr::kable(data.frame(Scenario=a$scenario,N=a$n,Removed=a$removed,Term=a$term,
 
 Removing Loving alone barely changes the preliminary gasoline log slope (0.3141 to 0.3169). Removing the most influential case, Peoria, leaves the positive quadratic term (0.001491) and gasoline log slope (0.3117). Excluding all 185 Cook-screen cases leaves 2,957 counties; the gas linear/quadratic coefficients become -0.1282 and 0.001775, and log gasoline becomes 0.2845. Directions persist, but the gas magnitude changes materially. This demonstrates sensitivity to a broader set of unusual counties. Selecting cases by residual/influence and then refitting creates a selected sample; its improved R-squared is not grounds to discard valid counties. All primary conclusions use the full sample.
 
+An exploratory geographic check examines Nebraska and Illinois because they contain `r tail_counts['NE']` and `r tail_counts['IL']` of the `r sum(z$tail_states$count_above_full_minimum)` counties strictly above the full-data minimum (`r num(turn,4)` Mcf/person): omitting both retains `r num(geo$n,0)` counties, with gas coefficients `r num(geo$gas_linear,5)` and `r num(geo$gas_squared,8)`, observed gas range `r num(geo$gas_min,2)`-`r num(geo$gas_max,2)` Mcf/person, and implied minimum `r num(geo$implied_minimum,2)` Mcf/person, outside that range, so the fitted derivative stays negative throughout the retained range and there is **no observed rising limb**. This strengthens the distinction between decline across much of the range and geographically concentrated evidence for the upturn, but changing both county composition and predictor range cannot identify a state effect or establish that the full-sample fit is wrong; the quadratic remains provisional, with the simpler log-gasoline model and all existing sensitivity fits retained.
+
 ## Limitations and preliminary conclusions
 
 These cross-sectional, observational associations do not establish causation or individual household behavior. Climate, income, urbanization, housing and other county characteristics may confound the associations; modeling those topics belongs to the other teammates and is not done here. County neighbors may share climate, infrastructure and modeling inputs, so independence is doubtful. Neither ordinary nor HC3 standard errors address spatial dependence; random-fold CV can also be optimistic when neighboring counties occur in both training and validation folds. Geographic validation or an appropriately justified dependence analysis remains future work.
 
 These are historical modeled estimates, not a set of independent current meter readings. Gasoline measures jurisdictional travel whereas gas and electricity are residential. Shared population denominators can contribute to ratio associations and small-population extremes. Sparse high-gas counties affect the fitted curvature. Missing external confounders, source geography differences and retained source limitations restrict interpretation.
 
-Overall, gas is negatively associated with electricity across most observed gas values, but a curved association better describes the full range. Gasoline's raw linear relationship explains very little; a modest positive association is clearer after logging gasoline and accounting for gas curvature. Even the preferred preliminary specification explains less than one fifth of response variation. The model is useful for describing these county patterns, with substantial remaining uncertainty and no causal claim.
+Overall, fitted electricity declines as gas increases across much of the observed gas range, while the fitted rising limb is geographically concentrated and is absent within the retained range after the exploratory Nebraska/Illinois exclusion. Gasoline's raw linear relationship explains very little; a modest positive association is clearer after logging gasoline and accounting for gas curvature. Even the preferred preliminary specification explains less than one fifth of response variation. The model is useful for describing these county patterns, with substantial remaining uncertainty and no causal claim.
 
 ## Compact handoff for the shared report
 

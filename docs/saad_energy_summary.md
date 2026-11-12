@@ -21,16 +21,23 @@ Gasoline is jurisdictional travel per resident, not household gasoline usage.
 | Electricity ~ gas + ln(gasoline) | 0.13639 | 0.13584 | 1.10890 | 1.11028 |
 | Electricity ~ gas + gas squared + ln(gasoline) | 0.18627 | 0.18549 | 1.07658 | 1.07721 |
 
-SE/RMSE units are MWh/person; n = 3,142 throughout. Random-fold CV is an
-interpolation check, not geographically independent validation.
+SE/RMSE units are MWh/person; n = 3,142 throughout. These are exploratory
+candidate-formula comparisons on the same seeded random county folds. Adding
+the quadratic to gas + log gasoline lowers RMSE by 0.0331 MWh/person (0.0451
+versus raw multiple regression). Full-data exploration informed the formulas and
+CV helped select the winner: its RMSE can be optimistic for the whole selection
+process and is not an independent assessment or evidence of new-region performance.
+Fixed row-wise logs/squares introduce no training/test leakage.
 
 - Gas/electricity Pearson r = -0.3411; Spearman r = -0.4556. Simple slope
   -0.04390 MWh/person per Mcf/person (OLS 95% CI -0.04813 to -0.03967).
 - Gasoline/electricity Pearson r = 0.0549; Spearman r = 0.1808. Simple slope
   0.00008606 per gallon/person, or 0.00861 MWh/person per 100 gallons/person.
   Classical p = 0.0021, but HC3 p = 0.104: avoid calling this strong evidence.
-- Raw multiple slopes: gas -0.04365; gasoline 0.00005752. Gasoline adds only
-  0.00152 partial R-squared beyond gas. Its HC3 p = 0.116, despite OLS p = 0.029.
+- Raw multiple slopes: gas -0.04365; gasoline 0.00005752. Adding gasoline raises
+  ordinary R-squared by 0.001340698 (0.134 percentage points of total response
+  variation); partial R-squared is 0.001517226 (0.152% of variation unexplained
+  by gas alone). Its HC3 p = 0.116, despite OLS p = 0.029.
 - Raw predictor correlation -0.0537 and VIF 1.003: fuel-to-fuel collinearity is negligible.
 
 ## Preferred preliminary model
@@ -38,13 +45,17 @@ interpolation check, not geographically independent validation.
 `electricity = 3.55018 - 0.099986*gas + 0.00142322*gas^2 + 0.314104*ln(gasoline)`.
 
 The quadratic follows visible gas curvature; logging gasoline reduces extreme
-ratio leverage. It has lower cross-validation error, while leaving the response
+ratio leverage. It has lower exploratory candidate-comparison RMSE, while leaving the response
 in useful original units. About 18.6% of electricity variation is explained.
 A doubling of gasoline corresponds to about 0.218 MWh/person more electricity
 at fixed gas (HC3 95% CI about 0.145 to 0.290). Gas's slope varies: at 10 Mcf/person
 it is about -0.0715 MWh/person per additional Mcf/person; the fitted minimum is
-near 35.1 Mcf/person. Do not summarize the full curve as uniformly negative or
-interpret the upturn causally. `log1p(gas)` was inspected graphically and preserves
+near 35.1 Mcf/person. Of 60 counties above it, 36 are in Nebraska and 13 in
+Illinois; the exploratory joint exclusion (n=2,947) gives a minimum of 175.98,
+outside the retained 0-51.05 Mcf/person range, so decline remains but no observed
+rising limb; changed composition/range identifies no state effect or invalid fit.
+The quadratic remains a provisional full-sample description, not a general fuel-
+substitution claim. `log1p(gas)` was inspected graphically and preserves
 zeros, but did not clearly resolve the high-tail curvature; ordinary log gas was
 not used. No broad transformation search was performed.
 

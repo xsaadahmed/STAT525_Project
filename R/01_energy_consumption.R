@@ -52,15 +52,19 @@ run_energy_analysis <- function(out = 'outputs/saad_energy_consumption') {
   }
   coefficients <- do.call(rbind,Map(coefficient_table,models,names(models)))
   csv(coefficients,'model_coefficients')
-  # Same response/folds: comparable original-scale RMSE. Random folds measure
-  # interpolation, not performance in geographically independent regions.
+  # Exploratory comparison of candidate formulas on common random county folds.
+  # Fixed row-wise logs/squares use no training/test information. Full-data EDA
+  # informed the candidates and CV informed selection: the winning RMSE is not
+  # independent validation of that selection process or of performance in a new region.
   set.seed(525); folds <- sample(rep(1:10,length.out=nrow(d)))
   comparison <- do.call(rbind,lapply(names(models),function(nm) {
-    m <- models[[nm]]; s <- summary(m); pred <- rep(NA_real_,nrow(d))
+    m <- models[[nm]]; s <- summary(m); pred <- rep(NA_real_,nrow(d)); predicted <- integer(nrow(d))
     for(k in 1:10) {
       fit <- lm(formula(m),d[folds!=k,])
       pred[folds==k] <- predict(fit,newdata=d[folds==k,])
+      predicted[folds==k] <- predicted[folds==k]+1L
     }
+    stopifnot(all(predicted==1L),all(is.finite(pred)))
     data.frame(model=nm,n=nobs(m),r_squared=s$r.squared,
       adjusted_r_squared=s$adj.r.squared,residual_se=s$sigma,
       cv_rmse=sqrt(mean((d$res_elec_mwh_pc-pred)^2)),
@@ -115,12 +119,35 @@ run_energy_analysis <- function(out = 'outputs/saad_energy_consumption') {
     }))
   }))
   csv(sensitivity,'sensitivity_coefficients')
+  # Exploratory geographic sensitivity: NE/IL dominate the full-data rising tail.
+  # This changes both range and composition; it does not estimate a state effect.
+  full_quad <- models$quadratic_gas_log_gasoline
+  full_b <- coef(full_quad)
+  full_minimum <- -full_b[2]/(2*full_b[3])
+  tail_states <- as.data.frame(table(d$state_abbr[d$res_gas_mcf_pc>full_minimum]),
+                              stringsAsFactors=FALSE)
+  names(tail_states) <- c('state_abbr','count_above_full_minimum')
+  tail_states$full_minimum_mcf_pc <- unname(full_minimum)
+  csv(tail_states,'gas_upturn_tail_by_state')
+  geographic_sensitivity <- do.call(rbind,lapply(c('all_counties','without_NE_IL'),function(scenario) {
+    keep <- if(scenario=='all_counties') rep(TRUE,nrow(d)) else !d$state_abbr %in% c('NE','IL')
+    sample <- d[keep,]; fit <- lm(formula(full_quad),sample); b <- coef(fit)
+    observed <- range(sample$res_gas_mcf_pc); minimum <- -b[2]/(2*b[3])
+    slope <- b[2]+2*b[3]*observed
+    data.frame(scenario=scenario,n=nrow(sample),gas_linear=unname(b[2]),
+      gas_squared=unname(b[3]),gas_min=observed[1],gas_max=observed[2],
+      implied_minimum=unname(minimum),minimum_within_range=minimum>=observed[1] && minimum<=observed[2],
+      derivative_at_min=unname(slope[1]),derivative_at_max=unname(slope[2]),
+      observed_rising_limb=b[3]>0 && slope[1]<0 && slope[2]>0)
+  }))
+  csv(geographic_sensitivity,'geographic_sensitivity')
   partial_r2 <- do.call(rbind,lapply(names(models)[3:5],function(nm) {
     m <- models[[nm]]; terms <- attr(terms(m),'term.labels')
     do.call(rbind,lapply(terms,function(term) {
       reduced <- lm(reformulate(setdiff(terms,term),response='res_elec_mwh_pc'),d)
       data.frame(model=nm,term=term,
-        partial_r_squared=(deviance(reduced)-deviance(m))/deviance(reduced))
+        partial_r_squared=(deviance(reduced)-deviance(m))/deviance(reduced),
+        delta_r_squared=summary(m)$r.squared-summary(reduced)$r.squared)
     }))
   }))
   csv(partial_r2,'partial_r_squared')
@@ -136,16 +163,24 @@ run_energy_analysis <- function(out = 'outputs/saad_energy_consumption') {
     boxplot(d[[vars[j]]],horizontal=TRUE,col='#8BBAD9',main='Full-range boxplot',xlab=labels[j])
   }; dev.off()
   png_plot('02_relationships',1800,1350); par(mfrow=c(2,2))
+  zoom_bounds <- list()
   for(j in 2:3) {
     x <- d[[vars[j]]]; y <- d$res_elec_mwh_pc
     plot(x,y,pch=16,cex=.5,col=blue,xlab=labels[j],ylab=labels[1],main='All counties: original scale')
     abline(models[[j-1]],col='#B91C1C',lwd=2); lines(lowess(x,y),col='#047857',lwd=2)
     legend('topright',c('OLS','LOWESS'),col=c('#B91C1C','#047857'),lty=1,bty='n',cex=.8)
+    limits <- unname(quantile(x,c(0,.99)))
     plot(x,y,pch=16,cex=.5,col=blue,xlab=labels[j],ylab=labels[1],
-      xlim=quantile(x,c(0,.99)),main='Zoom: X <= 99th percentile')
+      xlim=limits,xaxs='i',main='Zoom: X <= 99th percentile')
+    viewport <- par('usr')[1:2]
+    stopifnot(isTRUE(all.equal(viewport,limits,tolerance=1e-12)))
+    above <- sum(x>limits[2])
+    zoom_bounds[[vars[j]]] <- data.frame(variable=vars[j],lower=limits[1],upper=limits[2],
+      usr_lower=viewport[1],usr_upper=viewport[2],count_above_upper=above)
     abline(models[[j-1]],col='#B91C1C',lwd=2); lines(lowess(x,y),col='#047857',lwd=2)
-    mtext(sprintf('%d counties outside view; fits use all',sum(x>quantile(x,.99))),side=3,cex=.65,line=.2)
+    mtext(sprintf('%d counties above displayed upper limit; fits use all',above),side=3,cex=.65,line=.2)
   }; dev.off()
+  csv(do.call(rbind,zoom_bounds),'relationship_zoom_bounds')
   png_plot('03_transformed_relationships',1800,800); par(mfrow=c(1,2))
   for(xnm in c('log1p_gas','log_gasoline')) {
     x <- d[[xnm]]; y <- d$res_elec_mwh_pc
@@ -200,9 +235,13 @@ run_energy_analysis <- function(out = 'outputs/saad_energy_consumption') {
     'Exported coefficient estimates verified against fitted model objects.',
     'Nine genuine gas zeros preserved; log1p finite; gasoline strictly positive.',
     'Sensitivity exclusions are diagnostic alternatives, not cleaned datasets.',
+    'Exploratory NE/IL exclusion and full-data state tail counts exported.',
+    'Each county predicted once per candidate in seeded CV; selection is not independently validated.',
+    'Exact zoom user-coordinate bounds checked against minimum/99th percentile.',
     trimws(capture.output(sessionInfo()),which="right")),file.path(out,'execution_validation.txt'))
   invisible(list(data=d,descriptives=descriptives,correlations=correlations,models=models,
     coefficients=coefficients,comparison=comparison,vif=vif,diagnostics=diagnostics,
-    influence=influence,extremes=extremes,sensitivity=sensitivity,partial_r2=partial_r2))
+    influence=influence,extremes=extremes,sensitivity=sensitivity,partial_r2=partial_r2,
+    geographic_sensitivity=geographic_sensitivity,tail_states=tail_states))
 }
 energy_results <- run_energy_analysis()

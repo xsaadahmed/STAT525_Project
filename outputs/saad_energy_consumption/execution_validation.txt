@@ -3,6 +3,9 @@ Original RDS and CSV validated by unchanged R/validate_cleaned_data.R.
 Exported coefficient estimates verified against fitted model objects.
 Nine genuine gas zeros preserved; log1p finite; gasoline strictly positive.
 Sensitivity exclusions are diagnostic alternatives, not cleaned datasets.
+Exploratory NE/IL exclusion and full-data state tail counts exported.
+Each county predicted once per candidate in seeded CV; selection is not independently validated.
+Exact zoom user-coordinate bounds checked against minimum/99th percentile.
 R version 4.5.2 (2025-10-31 ucrt)
 Platform: x86_64-w64-mingw32/x64
 Running under: Windows 11 x64 (build 26200)
