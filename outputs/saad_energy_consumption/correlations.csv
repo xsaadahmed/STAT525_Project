@@ -1,0 +1,4 @@
+"variable1","variable2","pearson","spearman"
+"res_elec_mwh_pc","res_gas_mcf_pc",-0.341100075322568,-0.455621348595327
+"res_elec_mwh_pc","gasoline_gal_pc",0.0548648675001851,0.180815067049406
+"res_gas_mcf_pc","gasoline_gal_pc",-0.0536560012809304,-0.0821739031902039
