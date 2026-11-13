@@ -77,11 +77,11 @@ fonts/margins or hiding overflow. Recompile after each major integration change.
 
 ## Validation and status
 
-The current partial report is seven pages locally: Part A four; Part B three,
+The current partial report is six pages locally: Part A three; Part B three,
 including references. Saad and Ray have selected contributions inserted; Aidan's
-analyses and the final integrated conclusion remain pending. Part A is near its
-cap: review actual free space, remove placeholders and use the cuts above before
-adding Aidan's panels. A spare page overall does not relax the four-page Part A cap. There is no fixed page assignment to individual
+analyses and the final integrated conclusion remain pending. Review actual free
+space, remove placeholders and use the cuts above before adding further panels.
+Each part remains independently capped at four pages. There is no fixed page assignment to individual
 members. The 4+4 limits must be rechecked on the final combined PDF.
 
 
@@ -102,3 +102,17 @@ log joint models, retaining simple-model fit in Part A. Shorten the illustrative
 RUCC contrast before the dependence caveat. Keep the 0.441 cluster p-value and
 wide interval, the nonmonotonic factor interpretation, sample sizes and the
 Cook-screen sign change; removing these would materially overstate findings.
+
+
+## Academic style and spacing revision
+
+Names are omitted throughout the visible progress report (including title,
+captions and pending notes); the supplied progress-report rules do not explicitly
+require names. The explicit first-page names requirement belongs to the individual
+final-report section. No date is displayed. The compact two-line heading replaces
+maketitle, and section, paragraph, caption and float gaps are reduced without
+changing 11-point text or one-inch margins. First-person and task-ownership prose
+is replaced with topic-based academic language; substantive inference cautions
+and accurate AI disclosure remain. A duplicated pending note and secondary
+min/max electricity county examples were omitted to avoid a nearly blank page.
+The underlying numeric table still reports the full electricity range.

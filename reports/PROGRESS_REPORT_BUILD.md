@@ -53,9 +53,11 @@ original Saad contribution.
 
 This is a partial group draft: Saad's and Ray's selected Part A/B content is
 inserted; Aidan's placeholders and the integrated conclusion still need completion.
-Current local compile: seven pages, Part A four and Part B three (references included).
-Part A is near its cap; remove placeholders and use the cut plan as Aidan's material
-is integrated rather than assuming the spare total page can be added to Part A.
+Current local compile: six pages, Part A three and Part B three (references included).
+The compact title has no date or names; body/captions use impersonal academic prose.
+Heading/float spacing is reduced while retaining 11-point type and one-inch margins.
+Remove remaining placeholders and recheck each four-page part limit as economic
+and climate results are integrated.
 This is not a promise about the final count after new content is added. Each part
 must remain at most four pages and the total at most eight. Remove every visible
 blue Pending note before submission. Keep actual data, sample and uncertainty
