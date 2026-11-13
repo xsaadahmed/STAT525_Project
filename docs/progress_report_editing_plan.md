@@ -77,7 +77,28 @@ fonts/margins or hiding overflow. Recompile after each major integration change.
 
 ## Validation and status
 
-The revised partial report is five pages locally: Part A three; Part B two,
-including references. Aidan and Ray have designated placeholders; neither's full
-contribution was inserted. There is no fixed page assignment to individual
+The current partial report is seven pages locally: Part A four; Part B three,
+including references. Saad and Ray have selected contributions inserted; Aidan's
+analyses and the final integrated conclusion remain pending. Part A is near its
+cap: review actual free space, remove placeholders and use the cuts above before
+adding Aidan's panels. A spare page overall does not relax the four-page Part A cap. There is no fixed page assignment to individual
 members. The 4+4 limits must be rechecked on the final combined PDF.
+
+
+## Ray: selected results and further cuts
+
+Selected one five-panel figure: expenditure/emissions distributions, RUCC counts,
+expenditure-emissions scatterplot and categorical RUCC boxplots. The figure uses
+all valid primary observations and honest original-unit axes. Part A includes
+sample-accounting, price extremes, log-response motivation, the Pearson/Spearman
+disagreement and simple-model results. Part B includes a six-model raw/log table,
+weak fit, conditional emissions effect and OLS versus eGRID-cluster uncertainty,
+RUCC block test and one descriptive contrast, and material influence sensitivity.
+The full diagnostic grids and every category coefficient remain in the individual
+outputs rather than consuming main-report space.
+
+If more cuts are required, replace the six-model Ray comparison with just raw and
+log joint models, retaining simple-model fit in Part A. Shorten the illustrative
+RUCC contrast before the dependence caveat. Keep the 0.441 cluster p-value and
+wide interval, the nonmonotonic factor interpretation, sample sizes and the
+Cook-screen sign change; removing these would materially overstate findings.

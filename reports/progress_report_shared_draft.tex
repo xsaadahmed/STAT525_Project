@@ -31,8 +31,8 @@ The NREL \emph{City and County Energy Profiles Corrected} County baseline contai
 
 The responses are residential electricity consumption (MWh/person) and estimated residential electricity expenditure (USD/MWh), calculated as total residential expenditure in dollars divided by total MWh. Expenditure per MWh is not a utility tariff. Predictors are residential natural gas (Mcf/person; thousand cubic feet), jurisdictional on-road gasoline (gal/person), household income (2016 USD), unemployment (percent), categorical county classification (RUCC), electricity emissions intensity (metric tons CO$_2$e/MWh), and the selected climate measure. Gasoline covers travel within the jurisdiction per resident, not household fuel purchases. RUCC and DOE climate codes are represented as unordered factors, avoiding an unsupported equal-spacing assumption.
 
-All 3,142 counties enter Saad's primary models, including nine recorded gas zeros. County weights are equal. Missing external predictors require model-specific samples; identifiers are not silently recoded to force matches.
-\placeholder{Aidan: confirm climate measure/source, external-variable definitions and final sample sizes. Ray: add the price-model sample accounting. Report exclusions once here; avoid repeating source descriptions in each contribution.}
+All 3,142 counties enter Saad's primary models, including nine recorded gas zeros. Ray's emissions-only fits also use 3,142 counties; RUCC and joint fits use 3,140, excluding unmatched historical FIPS 02158 (Kusilvak, AK) and 46102 (Oglala Lakota, SD), without recoding or imputation. County weights are equal; valid response outliers remain in primary fits.
+\placeholder{Aidan: confirm climate measure/source, external-variable definitions and final model samples. Report exclusions once here.}
 
 \subsection*{A2. Distributions and response--predictor relationships}
 For the energy-consumption questions, electricity has slight left skew, natural gas is right-skewed, and gasoline has an extreme upper tail (Table~\ref{tab:desc}, Figure~\ref{fig:dist}). Gasoline's mean exceeds its median substantially. Figure~\ref{fig:scatter} shows a generally decreasing gas association with curvature in the sparse upper tail and a weak, nonuniform gasoline association.
@@ -50,13 +50,20 @@ For the energy-consumption questions, electricity has slight left skew, natural 
 \caption{Electricity versus gas and gasoline ($n=3,142$). Red: simple OLS; green: LOWESS. The gasoline viewport runs exactly from the observed minimum to its 99th percentile, with 32 values above view; both fitted curves use all counties.}
 \label{fig:scatter}
 \end{figure}
-\placeholder{Aidan/Ray: add compact distributions for predictors and the price response not shown above, followed by relevant scatterplots or categorical group summaries. Reuse electricity's distribution rather than showing it twice.}
+For the price questions (Figure~\ref{fig:ray}), expenditure is right-skewed (median 115.47; range 36.76--480.40 USD/MWh), and emissions intensity has a discrete regional distribution. RUCC groups show substantial overlapping expenditure distributions rather than a constant ruralness trend.
+\begin{figure}[!htbp]\centering
+\includegraphics[width=\linewidth]{\assetroot/ray/exploration.png}
+\caption{Ray's distributions (top) and expenditure relationships (bottom). Price/emissions panels use 3,142 counties; categorical RUCC panels use 3,140. Emissions are in metric tons CO$_2$e/MWh; expenditure is USD/MWh. The red line is full-sample simple OLS; RUCC boxplots preserve unordered categories and show marginal outliers.}
+\label{fig:ray}
+\end{figure}
+\placeholder{Aidan: add economic/climate distributions and response relationships; reuse the electricity distribution already shown.}
 
 \subsection*{A3. Extremes, transformations, and correlations}
 Loving County, TX (FIPS 48301; 76 residents) has 31,576.74 gallons/person of jurisdictional gasoline and raw multiple-model leverage 0.528. A small denominator can yield an extreme ratio without establishing an error. Peoria County, IL (17143) has the highest gas value, 75.72 Mcf/person. Electricity ranges from 0.97 in Hamilton County, NY (36041), to 10.51 MWh/person in Thayer County, NE (31169). All remain in primary fits. Log gasoline compresses its tail; a gas quadratic is motivated by curvature. Ordinary log gas is unsuitable for its nine zeros; graphical examination of log1p gas did not clearly remove the upturn. Electricity remains in original units.
 
 Pearson correlations are $-0.341$ (electricity/gas), $0.055$ (electricity/gasoline), and $-0.054$ (gas/gasoline); Spearman values are $-0.456$, $0.181$, and $-0.082$. Thus gas has the stronger ranking association, while fuel-to-fuel collinearity is negligible (raw-model VIF $1.003$). High leverage, an extreme response, and influence are distinct; flags alone do not justify deleting valid counties.
-\placeholder{Aidan/Ray: add topic-specific extremes, transformation decisions and predictor associations; do not correlate arbitrary numeric category labels.}
+For expenditure, Northwest Arctic Borough, AK (02188), is the high response extreme (480.40 USD/MWh); Douglas County, WA (53017), is the low extreme (36.76). Log expenditure compresses this positive response's upper tail, but does not guarantee normal residuals. Price/emissions Pearson $r=-0.185$ contrasts with Spearman $r=0.030$, warning against a uniform negative pattern. RUCC categories explain only 3.46\% of emissions variation in a factor regression; a correlation on the arbitrary code numbers would be inappropriate.
+\placeholder{Aidan: add economic/climate extremes, transformation choices and predictor associations.}
 
 \subsection*{A4. Simple regressions and initial assumptions}
 \begin{table}[!htbp]\centering\small
@@ -64,7 +71,8 @@ Pearson correlations are $-0.341$ (electricity/gas), $0.055$ (electricity/gasoli
 \label{tab:simple}\input{\assetroot/saad/simple.tex}
 \end{table}
 An extra 10 Mcf/person of gas corresponds to 0.439 MWh/person lower fitted electricity in the straight-line approximation. Gasoline's fitted difference per 100 gallons is only 0.00861 MWh/person. Its classical $p=0.0021$ becomes $p=0.104$ with HC3 variance sensitivity, so its raw linear evidence is weak. Gas residual plots show curvature; both models have Q--Q tail departures, and gas has unequal-variance evidence (BP-style $p=0.00044$). Q--Q plots assess residuals, not predictor normality. These issues motivate the alternatives and influence checks in Part B rather than a claim that assumptions are satisfied.
-\placeholder{Aidan/Ray: insert selected simple-model estimates, fit and brief assumption checks. Use factor block tests/contrasts where appropriate.}
+\par Ray's raw emissions-only fit has intercept 139.60 USD/MWh and slope $-37.14$ USD/MWh per metric ton CO$_2$e/MWh (OLS 95\% interval $-44.06$ to $-30.22$; $R^2=0.0341$). Its classical $p<0.001$ becomes 0.282 with eGRID-cluster variance sensitivity. The categorical RUCC-only fit explains 1.09\% of price variation; its classical block test is $F(8,3131)=4.296$, $p<0.001$, rather than a one-df ruralness trend. Raw/log diagnostic plots retain tail and variance departures, motivating cautious comparison in Part B, not an assertion of satisfied assumptions.
+\placeholder{Aidan: insert selected simple-model estimates, fit and assumption checks.}
 
 \clearpage
 \section*{Part B: Deeper analysis and preliminary conclusions}
@@ -91,13 +99,22 @@ The full-data gas minimum is 35.1267 Mcf/person; 60 counties lie above it, inclu
 \subsection*{B3. Electricity consumption: economic and climate predictors}
 \placeholder{Aidan: add completed multiple-model results, sample sizes, uncertainty, interpretation, selection and diagnostic concerns. Predictor preparation alone is not a completed regression analysis.}
 \subsection*{B4. Electricity expenditure: county classification and emissions}
-\placeholder{Ray: add corrected categorical-RUCC/emissions models, reference-category interpretations, fit, eGRID-cluster and influence sensitivities. Do not claim a constant ruralness trend or satisfied assumptions.}
+Table~\ref{tab:raymodels} retains both response scales. The log joint model is a provisional descriptive candidate because logging reduces the high-price tail; its $R^2=0.02975$ does not mean it is worse than the raw model's $R^2=0.04169$, since the responses differ. Both explain little variation. RUCC is an eight-df categorical block with code 1 as reference.
+\begin{table}[!htbp]\centering\small
+\caption{Ray's raw/log candidate models. RSE is measured on the stated response scale; neither RSE nor $R^2$ is directly comparable across scales. RUCC denotes nine unordered categories.}
+\label{tab:raymodels}\input{\assetroot/ray/comparison.tex}
+\end{table}
+Holding RUCC constant, the joint log emissions coefficient is $-0.18605$ (OLS 95\% interval $-0.23465$ to $-0.13744$). A 0.1 metric-ton/MWh difference corresponds to about 1.84\% lower fitted geometric mean expenditure per MWh, not a causal tariff change. However, the 26-region eGRID-cluster CR1 sensitivity gives a much wider interval, $-0.67534$ to $+0.30325$, and $p=0.441$ (t reference with 25 df). Repeated regional rates therefore undermine a confident significance claim from ordinary county-level inference.
+
+The classical conditional RUCC block test is $F(8,3130)=3.678$, $p=0.000279$; this is not a cluster-robust omnibus test. Category contrasts are nonmonotonic: for example, code 8 has coefficient $-0.06344$, about 6.15\% lower fitted geometric mean expenditure than code 1 at fixed emissions. This selected contrast is descriptive, not a prespecified discovery or evidence that price decreases steadily with ruralness.
+
+Joint log residuals still show curvature, changing spread (BP-style $p<0.001$) and substantial Q--Q tail departures; 40 externally studentized residuals exceed 3 in magnitude. Kauai County, HI (15007), has the largest Cook's $D=0.0361$; omitting it barely changes the emissions coefficient ($-0.18614$). Excluding all 172 Cook-screen cases leaves 2,968 counties and changes the slope to $+0.04213$, demonstrating material sensitivity. These selected-sample checks justify caution, not deletion of valid counties; primary fits retain them.
 
 \subsection*{B5. Shared limitations and preliminary conclusions}
 These observational county associations are not causal or individual-household effects. Historical modeled estimates, different source years/boundaries, omitted county characteristics and shared population denominators limit interpretation. Jurisdictional gasoline and residential fuels cover different activities; small populations can generate extreme ratios. Neighboring counties may share climate, infrastructure and modeling inputs, and emissions intensity repeats within 26 eGRID subregions. Neither ordinary nor HC3 inference resolves spatial dependence; region-cluster sensitivities also require assumptions about between-region independence.
 
-Saad's results indicate a negative gas association across much of the range, a geographically concentrated upper-tail upturn, and a modest positive conditional log-gasoline association. Limited fit and sensitivity prevent strong predictive or causal claims.
-\placeholder{Group: add the economic/climate and price takeaways, then one short integrated conclusion. Identify remaining geographic/diagnostic work for the presentation and independently written final reports.}
+Saad's results indicate a negative gas association across much of the range, a geographically concentrated upper-tail upturn, and a modest positive conditional log-gasoline association. Ray's models likewise have weak fit, nonmonotonic classification effects, and an emissions association sensitive to regional dependence and influence. Limited fit and sensitivity prevent strong predictive or causal claims.
+\placeholder{Group: add the economic/climate takeaway and finalize the integrated conclusion. Identify remaining geographic/diagnostic work for the presentation and independently written final reports.}
 
 \paragraph{AI disclosure.} Generative AI assisted with shared drafting and documented analysis code, checks and interpretation. Each member must verify this disclosure against actual assistance and current course requirements and review their contribution; completed independent student review is not asserted.
 
