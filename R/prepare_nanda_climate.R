@@ -11,13 +11,14 @@ weather <- read.delim(
 )
 
 names(weather) <- tolower(names(weather))
-names(weather)
-head(weather, 3)
+stopifnot(all(c("stcofips10", "date_string", "mean_temp_avg") %in% names(weather)))
 
 
 fips <- weather[["stcofips10"]]
 day <- as.Date(weather[["date_string"]], format = "%Y%m%d")
-temp_c <- as.numeric(weather[["mean_temp_avg"]])
+raw_temp <- weather[["mean_temp_avg"]]
+temp_c <- suppressWarnings(as.numeric(raw_temp))
+stopifnot(all(is.na(raw_temp) | (!is.na(temp_c) & is.finite(temp_c))))
 
 # verify no missing or duplicate county and date values
 stopifnot(
@@ -57,7 +58,7 @@ write.csv(
   na = ""
 )
 
-head(climate)
+# Annual values are missing unless all 366 finite daily temperatures exist.
 
 
 # checking which counties match the counties in our data

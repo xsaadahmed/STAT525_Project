@@ -91,7 +91,7 @@ After checks pass, it writes **22 columns** to separate `data/county_with_extern
 
 ## Provenance status
 
-ACS income: **not supplied**. BLS unemployment: **not supplied**. USDA RUCC: **not supplied**. No match rates or external-data results are claimed yet.
+ACS income and BLS unemployment: **supplied**, with coverage documented below. USDA RUCC: **not supplied**. The final three-source merge is not ready. NaNDA climate is prepared by the script below but its generated CSV is not committed; reported weather coverage requires the original download to reproduce.
 
 
 ### NaNDA county heating and cooling degree days, 2016
@@ -104,8 +104,8 @@ ACS income: **not supplied**. BLS unemployment: **not supplied**. USDA RUCC: **n
 
 - **Preparation.** We converted each county's daily mean temperature from
   Celsius to Fahrenheit. Using a 65°F base, we calculated daily heating degree
-  days as `max(65 - mean_temp_avg, 0)` and daily cooling degree days as
-  `max(mean_temp_avg - 65, 0)`. We summed each measure by county to obtain
+  days as `max(65 - temp_f, 0)` and daily cooling degree days as
+  `max(temp_f - 65, 0)`. We summed each measure by county to obtain
   `hdd65` and `cdd65`, both in °F-days. We used the five-digit `county_fips`
   as the county identifier.
 
@@ -161,7 +161,7 @@ ACS income: **not supplied**. BLS unemployment: **not supplied**. USDA RUCC: **n
   `county_fips` from `GEO_ID`, preserving leading zeros. We used the estimate
   `B19013_001E` as `median_household_income`, measured in 2016
   inflation-adjusted dollars. We kept exact dollar estimates and treated
-  unavailable or bounded estimates as missing. We checked for duplicate
+  unavailable values as missing at import; the script rejects negative suppression codes or nonnumeric bounded estimates rather than silently treating them as exact dollars. We checked for duplicate
   county identifiers before saving the CSV.
 
 - **Coverage.** The source contained 3,220 unique county records,

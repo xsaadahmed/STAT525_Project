@@ -18,7 +18,10 @@ stopifnot(
   all(grepl("^[0-9]{3}$", county))
 )
 
-rate <- as.numeric(bls$`Unemployment Rate (%)`)
+raw_rate <- trimws(bls$`Unemployment Rate (%)`)
+rate <- suppressWarnings(as.numeric(raw_rate))
+stopifnot(all(is.na(raw_rate) | raw_rate == "" |
+                (!is.na(rate) & is.finite(rate))))
 # check for proper rates
 stopifnot(all(rate >= 0 & rate <= 100, na.rm = TRUE))
 
