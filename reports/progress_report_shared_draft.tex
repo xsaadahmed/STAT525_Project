@@ -1,0 +1,146 @@
+% Overleaf: upload this file, select it as Main document, compile with pdfLaTeX.
+% Shared prose only. Replace every visible placeholder before submission.
+% Each Part must remain <= 4 pages; total submission <= 8 pages.
+\documentclass[11pt,letterpaper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,booktabs,tabularx,array}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+% Visible editing aids: remove/replace all of these in the submission.
+\newcommand{\placeholder}[1]{\par\begingroup\color{blue!55!black}\small
+\textbf{[TO COMPLETE:} #1\textbf{]}\par\endgroup}
+\newcommand{\editorNote}[1]{\par\begingroup\color{gray}\small
+\textit{Drafting note: #1}\par\endgroup}
+\title{County Energy Consumption and Electricity Expenditure\\
+\large STAT 525: Group Progress Report}
+\author{Ray, Saad, and Aidan\\University of Massachusetts Amherst}
+\date{November 12, 2026}
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+
+\section*{Part A: Data exploration and initial modeling}
+\label{part:a}
+
+\subsection*{A1. Project goals and research questions}
+Energy demand and electricity expenditure vary across U.S. counties. Our project examines how these differences are associated with other forms of energy use, economic conditions, climate, and county classification. We study two continuous responses: residential electricity consumption per person and estimated residential electricity expenditure per MWh. The latter is referred to as electricity price for brevity, but it is not a directly observed utility tariff.
+
+Our research questions are:
+\begin{enumerate}
+\item Is residential electricity consumption per person associated with residential natural gas consumption and jurisdictional on-road gasoline consumption per person?
+\item How is residential electricity consumption per person associated with median household income, unemployment, and climate?
+\item How does estimated residential electricity expenditure per MWh differ across rural--urban county classifications, and how is it associated with electricity-related emissions intensity?
+\end{enumerate}
+These questions extend the approved proposal using county-level regression models. We aim to describe associations and assess how well selected predictors account for county differences; the study does not identify causal effects or individual household behavior.
+
+\subsection*{A2. Data source, variables, and analysis samples}
+Our starting point is the County worksheet of the NREL \emph{City and County Energy Profiles Corrected} dataset, published through the Open Energy Data Initiative \cite{nrel}. The corrected release addresses natural-gas unit-labeling errors. The accepted cleaned baseline contains 3,142 counties or county equivalents and 19 variables, with unique five-character county FIPS identifiers and no missing baseline values. We use this baseline rather than reconstructing or changing the source workbook.
+
+Energy consumption and expenditure values are modeled estimates. Repository source documentation identifies primarily 2016-oriented inputs, including 2012--2016 American Community Survey (ACS) population and housing estimates and 2016 eGRID emissions factors; the workbook was completed in December 2019. Thus, the data describe historical county conditions rather than current energy use. The two responses and candidate predictors are summarized in Table~\ref{tab:variables}.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Responses and candidate predictors across the three research areas. Include only predictors actually used in the completed analysis.}
+\label{tab:variables}
+\begin{tabularx}{\linewidth}{@{}p{0.19\linewidth}Yp{0.27\linewidth}@{}}
+\toprule
+Role & Measure & Units or representation\\
+\midrule
+Response & Residential electricity consumption per capita & MWh/person\\
+Response & Residential electricity expenditure per MWh & USD/MWh\\
+Predictor & Residential natural gas consumption per capita & Mcf/person (thousand cubic feet/person)\\
+Predictor & Jurisdictional on-road gasoline consumption per capita & Gallons/person\\
+Predictor & Median household income, ACS 2012--2016 & 2016 inflation-adjusted USD\\
+Predictor & Annual-average unemployment rate, BLS 2016 & Percent, on a 0--100 scale\\
+Predictor & Climate: retained DOE zone codes and/or 2016 heating/cooling degree days & Unordered categories and/or degree F-days\\
+Predictor & USDA 2013 Rural--Urban Continuum Code (RUCC) & Nine unordered categories\\
+Predictor & Electricity CO$_2$-equivalent output emissions intensity & Metric tons CO$_2$e/MWh\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The expenditure response is calculated as total modeled residential electricity expenditure, converted from thousands of dollars to dollars, divided by total residential electricity consumption in MWh. Residential natural gas and electricity measure residential activity; gasoline measures on-road consumption within a jurisdiction divided by resident population. Gasoline should therefore not be interpreted as household fuel purchases or resident-only driving.
+
+External predictors are linked by county FIPS. Income comes from ACS five-year table B19013 \cite{acs}; unemployment comes from BLS annual-average county estimates \cite{bls}; and county classification comes from the supplied USDA 2013 RUCC file \cite{usda}. The climate preparation workflow uses NaNDA daily county temperatures to construct heating and cooling degree days with a 65-degree-Fahrenheit base \cite{nanda}. The baseline also contains DOE climate-zone codes. RUCC and DOE zone codes are treated as unordered factors unless a different encoding is explicitly justified; numeric labels do not establish equal spacing between categories.
+
+\placeholder{Aidan: confirm which climate representation enters the submitted analyses (DOE zones, HDD/CDD, or a justified subset), and remove unused measures from Table 1 and this source description. Confirm the actual climate file and coverage used; its preparation script alone does not establish the final model sample.}
+
+The baseline includes nine recorded natural-gas zeros, which are retained as observations rather than treated as missing. External-data availability differs by source, so a complete baseline does not imply complete predictors for every model. Unmatched FIPS and missing external measurements are preserved as missing values; any analysis-specific exclusions must be reported. County identifiers are not silently recoded to force a match, and unusual energy values are not automatically removed. Each retained county receives equal weight in the present analyses, so results describe county differences rather than an average resident's experience.
+
+\placeholder{Insert one compact sample-accounting table: analysis/model family; starting county count; missing/unmatched predictors; other justified exclusions; final n. Use the actual in-memory joins and model samples, not the reference-source row counts. Mention relevant historical boundary/code mismatches.}
+
+\subsection*{A3. Distributions and descriptive statistics}
+\placeholder{All members: insert a compact descriptive table for both responses and all predictors used, with units, n, missingness, mean/median and spread where meaningful. For categorical predictors report category counts. Add grouped distribution panels and short comments on skewness and extremes. Avoid repeating the electricity-consumption distribution in two contributions.}
+
+\subsection*{A4. Response--predictor relationships}
+\placeholder{Saad: energy-consumption scatterplots and brief direction/shape description. Aidan: economic/climate relationship plots. Ray: expenditure--emissions scatterplot and expenditure-by-RUCC boxplots. Quantitative plots need appropriate fitted trends; categorical predictors need group summaries rather than assumed numeric trends. Number each figure and give a self-contained caption, units and analysis n.}
+
+\subsection*{A5. Extreme counties and transformation choices}
+An extreme marginal value, a large conditional residual, high leverage, and influence on a fitted regression are distinct features. We identify unusual counties by name, state, and FIPS and examine them before deciding whether a sensitivity analysis is needed. A diagnostic flag alone is not evidence of a data error. Transformations and nonlinear terms should address the distribution or functional form of the relationship rather than be selected only to obtain smaller p-values.
+
+\placeholder{Each member: identify the most relevant unusual counties; explain any log transformation or nonlinear term and its handling of zeros; state which observations remain in primary fits. Keep detailed county listings outside the main narrative unless essential.}
+
+\subsection*{A6. Correlations and potential multicollinearity}
+\placeholder{Insert a compact correlation summary for quantitative variables within the relevant response/model groups. Include Spearman correlations if justified by skewness or extremes. Explain predictor overlap; do not calculate a Pearson correlation by treating RUCC or DOE zone labels as continuous measurements. Reserve fitted-model VIF discussion for Part B if needed.}
+
+\subsection*{A7. Simple regressions and initial assumption checks}
+\placeholder{Insert selected simple-regression results across the three topics: model and sample size; slope or factor contrasts/block test; uncertainty; R-squared and residual standard error. Interpret coefficients in actual units and summarize functional form, residual Q-Q and variance/influence checks. Q-Q plots assess residual normality, not predictor normality. Explain remedies carried forward to Part B without claiming assumptions are met merely because a transformation was used.}
+
+% This forced break makes the two four-page budgets easier to track.
+% It does NOT reserve four pages for Part A or establish compliance automatically.
+\clearpage
+\section*{Part B: Deeper analysis and preliminary conclusions}
+\label{part:b}
+
+\subsection*{B1. Multiple-regression strategy}
+We organize the multiple-regression analyses around the two response variables and the research questions in Part A. Predictors are considered jointly to distinguish unadjusted relationships from associations conditional on other included variables. Candidate transformations or nonlinear terms are motivated by exploratory patterns and diagnostic evidence. County classifications are represented categorically, and comparisons between nested models use the appropriate number of degrees of freedom.
+
+Model choice considers interpretability, explanatory value, residual behavior, and sensitivity to unusual observations. A larger R-squared or a smaller p-value alone does not establish that a model is adequate. Fit statistics must be interpreted on their stated response scale and sample; raw-response and log-response residual standard errors are not directly comparable. Any cross-validation used after full-data exploration and candidate selection is an exploratory comparison, not an independent assessment of the entire selection process or performance in a new geographic region.
+
+\placeholder{Confirm the actual candidate set and inference methods used by each member. State which models are provisional. Do not imply that all economic, climate and energy predictors were fitted together unless that combined model was actually run.}
+
+\subsection*{B2. Electricity consumption: energy predictors}
+\placeholder{Saad: insert a compact joint-model comparison, selected coefficients/intervals and conditional interpretations. Explain the preferred provisional specification, gas curvature, geographically concentrated evidence for its rising limb, and relevant influence/geographic sensitivities. Keep full numerical output out of the prose.}
+
+\subsection*{B3. Electricity consumption: economic and climate predictors}
+\placeholder{Aidan: insert completed joint economic/climate models, sample sizes, key estimates and confidence intervals and interpretations. Explain the climate specification and missingness restrictions. Identify results as pending if only predictor preparation has been completed.}
+
+\subsection*{B4. Electricity expenditure: county classification and emissions}
+\placeholder{Ray: insert the corrected categorical-RUCC/emissions results and model comparison. Interpret factor contrasts relative to a stated reference category, not a constant increase in ruralness. Distinguish classical inference from the eGRID-cluster sensitivity and describe the remaining diagnostic/influence concerns. Explain what log-response coefficients mean.}
+
+\subsection*{B5. Model comparison, diagnostics, and sensitivity}
+\placeholder{Combine the most informative comparisons in one small table where feasible, keeping response scales and samples explicit. Summarize residual form, variance, Q-Q tails, multicollinearity and influence. Explain whether sensitivity fits change magnitude, direction or uncertainty. Select a few readable diagnostic panels instead of reproducing every model's full diagnostic grid. Avoid repeating results already explained in B2--B4.}
+
+\subsection*{B6. Main findings and study limitations}
+\placeholder{Write a short synthesis after all three contributions are inserted: answer each research question with its strongest numerical evidence, distinguish practical magnitude from statistical significance, and identify conclusions that are sensitive or unresolved. Do not turn this shared opening into a claim of findings that have not been jointly reviewed.}
+
+Several limitations apply across the project. These observational, cross-sectional data do not establish causation. Counties differ in climate, income, settlement patterns, housing, and other characteristics; an association conditional on a small predictor set may still reflect omitted factors. County-level results cannot be directly transferred to individual households. The energy values are modeled historical estimates, and the sources do not all share identical measurement years or county boundaries.
+
+The interpretation of each measure also matters. Estimated expenditure per MWh is not a utility tariff. Jurisdictional gasoline and residential gas/electricity cover different activities. Per-capita ratios share population denominators, and small populations can produce extreme ratios. Source limitations retained during cleaning, including fractional housing estimates and geographic naming differences, should not be confused with newly established measurement errors.
+
+Finally, neighboring counties may share climate, infrastructure, market conditions, and source-model inputs. Electricity emissions intensity repeats within 26 eGRID subregions, so county rows do not provide thousands of independently measured emissions rates. Ordinary regression inference can overstate precision when errors are dependent. Heteroscedasticity adjustments do not correct geographic dependence, and an eGRID-cluster sensitivity still relies on assumptions about dependence between regions. Diagnostics and sensitivity analyses qualify the conclusions rather than certify that every assumption has been satisfied.
+
+\subsection*{B7. Preliminary conclusions and next steps}
+\placeholder{After integrating results, write one short concluding paragraph stating the main supported associations and the limits of the provisional models. List specific unresolved work for the group presentation and individual final reports. Keep analysis limitations distinct from report-assembly tasks.}
+
+The next stage is to refine the shared interpretation, review remaining diagnostic and geographic concerns, and select results that support a coherent presentation. This progress report is a draft and may be revised for later work. The December 23 final report is individually written and separately subject to the final-report page, formatting, code-submission, and disclosure requirements; this shared draft is not a substitute for that independent submission.
+
+
+
+% Keep references inside the eight-page submission unless the instructor explicitly
+% exempts them. Do not shrink the font or margins to hide excess content.
+\begin{thebibliography}{9}
+\small
+\bibitem{nrel} National Renewable Energy Laboratory. \emph{City and County Energy Profiles}, corrected workbook. Open Energy Data Initiative, submission 149. \url{https://data.openei.org/submissions/149}. Dataset vintage and preparation documented in the project repository.
+\bibitem{acs} U.S. Census Bureau. \emph{2012--2016 American Community Survey Five-Year Estimates}, detailed table B19013: Median Household Income. \url{https://data.census.gov/table/ACSDT5Y2016.B19013}.
+\bibitem{bls} U.S. Bureau of Labor Statistics. \emph{Local Area Unemployment Statistics: Labor Force Data by County, 2016 Annual Averages}. \url{https://www.bls.gov/lau/laucnty16.xlsx}.
+\bibitem{usda} U.S. Department of Agriculture, Economic Research Service. \emph{2013 Rural--Urban Continuum Codes}. Supplied historical county CSV; preparation and provenance recorded in the project external-data documentation. \url{https://www.ers.usda.gov/data-products/rural-urban-continuum-codes}.
+\bibitem{nanda} National Neighborhood Data Archive. \emph{Weather by County, United States, 2003--2016}, ICPSR 38858, dataset 14 (2016 average temperatures). \url{https://doi.org/10.3886/ICPSR38858.v1}.
+\end{thebibliography}
+\end{document}
