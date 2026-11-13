@@ -1,0 +1,165 @@
+---
+title: "County electricity use, climate, and economic conditions"
+author: "Aidan Lang | STAT 525 progress report contribution"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+root <- normalizePath(if (file.exists("STAT525_Project.Rproj")) "." else "..")
+knitr::opts_knit$set(root.dir = root)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, fig.align = "center")
+```
+
+```{r analysis, include=FALSE}
+source("R/02_economic_factors.R", local = TRUE)
+
+fmt <- function(x, digits = 2) {
+  formatC(x, format = "f", digits = digits, big.mark = ",")
+}
+change <- function(b) {
+  paste(fmt(abs(b), 3), "MWh/person", if (b < 0) "lower" else "higher")
+}
+r2 <- function(fit) 100 * summary(fit)$r.squared
+
+y <- county[[yvar]]
+qt_y <- quantile(y, c(.25, .5, .75))
+max_y <- which.max(y)
+rho <- correlations["hdd100", "cdd100"]
+weather_test <- anova(econ, full)
+
+income_x <- model.frame(simple$income10k)$income10k
+income_res <- residuals(simple$income10k)
+sd_low <- sd(income_res[income_x <= quantile(income_x, .25)])
+sd_high <- sd(income_res[income_x >= quantile(income_x, .75)])
+```
+
+## Part A. Exploration and simple regressions
+
+How does modeled residential electricity use per person vary across U.S.
+counties with heating and cooling demand, median household income, and
+unemployment? Each county receives equal weight. Among `r fmt(nrow(county), 0)`
+counties, median electricity use was `r fmt(qt_y[2])` MWh/person, with the
+middle half between `r fmt(qt_y[1])` and `r fmt(qt_y[3])`. Saad's energy
+section shows the distribution of this shared response.
+
+Heating degree days (HDD) and cooling degree days (CDD) sum daily temperature
+departures below and above 65°F, respectively. We used a county's 2016 totals
+only when all 366 daily temperatures were available. The FIPS join matched
+`r fmt(sum(!is.na(weather_row)), 0)` energy counties to weather records, and
+`r fmt(nobs(simple$hdd100), 0)` had usable annual totals. Income is the
+2012–2016 ACS five-year estimate in 2016 dollars. Unemployment is the BLS
+2016 annual-average rate.
+
+```{r distributions, out.width="85%", fig.cap="Figure 1. County distributions of each predictor. Panel titles give the number of counties with observations."}
+knitr::include_graphics(normalizePath(file.path(out, "hist.png")), rel_path = FALSE)
+```
+
+The income and unemployment distributions have long upper tails. For example,
+`r county$county_state_name[which.max(county$unemployment)]` had
+`r fmt(max(county$unemployment, na.rm = TRUE), 1)`% unemployment, compared
+with a county median of `r fmt(median(county$unemployment, na.rm = TRUE), 1)`%.
+Among counties with complete weather records, median HDD and CDD were
+`r fmt(100 * median(county$hdd100, na.rm = TRUE), 0)` and
+`r fmt(100 * median(county$cdd100, na.rm = TRUE), 0)` degree-days.
+On the response side, `r county$county_state_name[max_y]` had the highest
+electricity use at `r fmt(y[max_y])` MWh/person. We retained unusual
+observations whenever the required predictors were available.
+
+```{r scatter, out.width="85%", fig.cap="Figure 2. Residential electricity use against each predictor. Each dot is one county. The solid line is the simple linear fit and the dashed line is a locally smoothed trend."}
+knitr::include_graphics(normalizePath(file.path(out, "scatter.png")), rel_path = FALSE)
+```
+
+```{r simple-results}
+knitr::kable(
+  simple_table, digits = c(0, 0, 3, 3, 3, 3, 2),
+  col.names = c("Predictor", "Counties", "Slope", "95% lower", "95% upper",
+                "R² (%)", "Residual SE"),
+  caption = "Table 1. Separate regressions. Slopes give MWh/person per predictor unit shown. Residual SE is in MWh/person. Intervals use ordinary least squares."
+)
+```
+
+A $10,000 higher median household income was associated with fitted electricity
+use that was `r change(coef(simple$income10k)[2])` in the income-only model.
+Unemployment alone explained `r fmt(r2(simple$unemployment), 3)`% of the
+variation. The HDD-only and CDD-only fits explained
+`r fmt(r2(simple$hdd100), 1)`% and `r fmt(r2(simple$cdd100), 1)`%,
+respectively, on the same weather-covered counties.
+
+**Model checks.** A log-income fit explained `r fmt(r2(log_income), 1)`% of
+the variation versus `r fmt(r2(simple$income10k), 1)`% on the dollar scale.
+We retained income in $10,000 units for interpretation. Adding a squared CDD
+term to the CDD-only model changed adjusted R² by
+`r fmt(100 * (summary(cdd_curve)$adj.r.squared - summary(simple$cdd100)$adj.r.squared), 2)`
+percentage points. Figure 2 shows where the smoothed trend departs from the
+straight line and how many counties support the pattern.
+
+Income-model residual SD was `r fmt(sd_low)` MWh/person in the lowest income
+quartile and `r fmt(sd_high)` in the highest. The largest absolute standardized
+residual in that fit was `r fmt(max(abs(rstandard(simple$income10k))), 1)`.
+The wider spread at high incomes makes heteroskedasticity-robust intervals a
+useful follow-up to the conventional intervals reported here. Neighboring
+counties may also have correlated errors. The supporting plots below show the
+residual and normal Q–Q checks for each fit.
+
+```{r correlations}
+short <- c("HDD", "CDD", "Income", "Unemployment")
+dimnames(correlations) <- list(short, short)
+knitr::kable(correlations, digits = 2,
+             caption = "Table 2. Pearson correlations on the joint model sample.")
+```
+
+Among the `r fmt(nrow(joint), 0)` joint-model counties, HDD and CDD had
+`r sprintf("r = %.2f", rho)`. A simple regression of one weather measure on
+the other explains `r fmt(100 * rho^2, 1)`% of its variation. The variation
+remaining after accounting for the other weather measure helps distinguish
+the two slopes in the joint model.
+
+## Part B. Do HDD and CDD add information beyond income and unemployment?
+
+We fit an economic model with income and unemployment, then added HDD and CDD.
+Both models used the same `r fmt(nrow(joint), 0)` counties. The economic model
+explained `r fmt(r2(econ), 1)`% of the variation. Adding weather brought this
+to **`r fmt(r2(full), 1)`%**, a gain of
+**`r fmt(r2(full) - r2(econ), 1)` percentage points**. The joint model's
+adjusted R² was `r fmt(summary(full)$adj.r.squared, 3)` and its residual
+standard error was `r fmt(sigma(full))` MWh/person. The joint test for adding
+HDD and CDD gave F(2, `r df.residual(full)`) = `r fmt(weather_test$F[2])`
+with p-value `r format.pval(weather_test[["Pr(>F)"]][2], digits = 2, eps = .001)`.
+
+```{r adjusted-results}
+knitr::kable(
+  adjusted_table, digits = 3, row.names = FALSE,
+  col.names = c("Predictor", "Adjusted slope", "95% lower", "95% upper"),
+  caption = "Table 3. Joint model slopes in MWh/person per unit shown, holding the other three predictors fixed. Intervals are model-based 95% confidence intervals."
+)
+```
+
+At fixed HDD, income, and unemployment, an additional 100 CDD was associated
+with fitted electricity use that was `r change(coef(full)["cdd100"])`.
+At fixed weather and unemployment, a $10,000 higher median income was
+associated with fitted electricity use that was `r change(coef(full)["income10k"])`.
+
+`r joint$county_state_name[influential]` (FIPS `r joint$county_fips[influential]`)
+had the largest Cook's distance in the joint fit. Omitting it in a sensitivity
+check changed the CDD slope from `r fmt(coef(full)["cdd100"], 3)` to
+`r fmt(coef(without_one)["cdd100"], 3)` MWh/person per 100 CDD.
+
+These comparisons describe county averages. The climate findings apply to
+counties with complete temperature records. Differences in housing and heating
+fuel could also contribute to the associations. NREL used household income
+categories in constructing its residential energy estimates, so part of the
+income relationship may reflect how the response was modeled.
+[NREL methodology](https://docs.nlr.gov/docs/fy19osti/72748.pdf)
+
+<details><summary>Supporting diagnostic plots for the four simple models and the joint model</summary>
+
+```{r diagnostics, fig.width=12, fig.height=5, out.width="100%", fig.cap="Figure 3. The top row shows residuals versus fitted values. The bottom row shows normal Q–Q plots of standardized residuals."}
+plot_checks()
+```
+
+</details>
+
+**Data.** [NREL county energy profiles](https://data.openei.org/submissions/149) ·
+[NaNDA county weather, dataset 14](https://doi.org/10.3886/ICPSR38858.v1) ·
+[ACS table B19013](https://data.census.gov/table/ACSDT5Y2016.B19013) ·
+[BLS county annual averages](https://www.bls.gov/lau/laucnty16.xlsx).
